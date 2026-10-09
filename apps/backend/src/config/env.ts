@@ -128,7 +128,7 @@ export const config = {
 
   sendgrid: {
     apiKey: process.env.SENDGRID_API_KEY || '',
-    fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@flighttracker.app',
+    fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@watchmyfares.com',
   },
 
   // CORS
@@ -200,9 +200,9 @@ export const config = {
       .filter(Boolean),
   },
 
-  appName: process.env.APP_NAME || 'Flight Tracker',
+  appName: process.env.APP_NAME || 'watchMyFares',
   // Deep link base used in password-reset emails.
-  appScheme: process.env.APP_SCHEME || 'flighttracker',
+  appScheme: process.env.APP_SCHEME || 'watchmyfares',
 };
 
 const INSECURE_JWT_DEFAULTS = ['dev-secret-key', 'dev-refresh-secret-key'];

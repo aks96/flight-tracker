@@ -130,7 +130,7 @@ Notes on the production compose file:
 3. **Create App Store Connect app**
    - Visit appstoreconnect.apple.com
    - Create new app
-   - Set bundle ID: `com.flighttracker.mobile`
+   - Set bundle ID: `com.watchmyfares.app`
 
 4. **Create provisioning profile**
    - Use Xcode or Apple Developer portal
@@ -156,7 +156,7 @@ Notes on the production compose file:
 2. **Create Google Play app**
    - Visit play.google.com/console
    - Create new app
-   - Set package name: `com.flighttracker.mobile`
+   - Set package name: `com.watchmyfares.app`
 
 3. **Generate Android keystore**
    ```bash
@@ -406,4 +406,4 @@ SELECT * FROM pg_stat_statements ORDER BY mean_time DESC;
 
 - Documentation: See `README.md`
 - Issues: GitHub Issues
-- Email: support@flighttracker.app
+- Email: support@watchmyfares.com

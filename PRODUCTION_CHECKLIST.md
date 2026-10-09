@@ -99,7 +99,7 @@ Complete this checklist before deploying to production.
 
 ### Deployment Preparation
 - [ ] App version updated (1.0.0)
-- [ ] Bundle ID configured (com.flighttracker.mobile)
+- [ ] Bundle ID configured (com.watchmyfares.app)
 - [ ] App icon and splash screen finalized
 - [ ] Privacy policy and terms linked
 - [ ] App store screenshots prepared
@@ -119,7 +119,7 @@ Complete this checklist before deploying to production.
 ### Android (Google Play)
 - [ ] Google Play Developer Account created ($25 one-time)
 - [ ] App created in Google Play Console
-- [ ] Package name configured (com.flighttracker.mobile)
+- [ ] Package name configured (com.watchmyfares.app)
 - [ ] Keystore generated and backed up securely
 - [ ] App signing configured in Play Console
 - [ ] EAS build credentials configured
@@ -322,7 +322,7 @@ Complete this checklist before deploying to production.
 - **Mobile Lead**: [Name]
 - **DevOps**: [Name]
 - **On-Call**: [Rotation Schedule]
-- **Support Email**: support@flighttracker.app
+- **Support Email**: support@watchmyfares.com
 
 ---
 

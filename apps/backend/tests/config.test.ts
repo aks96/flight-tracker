@@ -44,7 +44,7 @@ const VALID_PROD_ENV = {
   DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/flight_tracker',
   REDIS_URL: 'rediss://cache.example.com:6379',
   DUFFEL_API_KEY: 'duffel_test_key',
-  CORS_ORIGIN: 'https://api.flighttracker.app',
+  CORS_ORIGIN: 'https://api.watchmyfares.com',
 };
 
 describe('validateConfig', () => {

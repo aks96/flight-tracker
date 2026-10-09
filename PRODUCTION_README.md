@@ -366,7 +366,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 ## 🆘 Support
 
 - **Issues**: GitHub Issues
-- **Email**: support@flighttracker.app
+- **Email**: support@watchmyfares.com
 - **Docs**: Full documentation in this repository
 
 ## 🚀 Roadmap

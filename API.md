@@ -4,7 +4,7 @@ Complete REST API reference for the Flight Tracker backend service.
 
 ## Base URL
 
-Production: `https://api.flighttracker.com`
+Production: `https://api.watchmyfares.com`
 Development: `http://localhost:3000`
 
 ## Authentication
@@ -189,7 +189,7 @@ Content-Type: application/json
 
 The response is identical whether or not the address has an account — otherwise
 this endpoint becomes an account-enumeration oracle. The emailed link uses the
-app's deep-link scheme: `flighttracker://reset-password?token=...`. Tokens are
+app's deep-link scheme: `watchmyfares://reset-password?token=...`. Tokens are
 single-use and expire after 1 hour.
 
 ---
