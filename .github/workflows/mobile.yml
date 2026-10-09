@@ -1,0 +1,110 @@
+name: Mobile EAS Build
+
+# Builds run automatically; store submission is manual. The previous version
+# submitted to the App Store and Google Play on every push to main, with no
+# version bump and no approval step.
+on:
+  push:
+    branches: [main, release/*]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        type: choice
+        options: [preview, production]
+        default: preview
+      submit:
+        description: Submit the build to the app stores after it finishes
+        type: boolean
+        default: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --workspace apps/mobile --include-workspace-root
+
+      - name: Typecheck
+        run: npx tsc --noEmit --project apps/mobile/tsconfig.json
+
+      # Catches native module versions drifting from the installed Expo SDK —
+      # the mismatch that had expo-notifications on SDK 51 under Expo 57.
+      - name: Verify Expo dependency versions
+        run: npx expo install --check
+        working-directory: apps/mobile
+
+  build:
+    needs: check
+    # Only on an explicit dispatch, or a push to a release branch — an EAS
+    # build costs credits and shouldn't fire on every merge to main.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    environment: mobile-release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci --workspace apps/mobile --include-workspace-root
+
+      - name: Build
+        run: eas build --platform all --profile ${{ inputs.profile || 'preview' }} --non-interactive --no-wait
+        working-directory: apps/mobile
+
+  submit:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.submit
+    runs-on: ubuntu-latest
+    # Requires a manual approval on the GitHub environment before anything
+    # reaches a store review queue.
+    environment: app-store-submission
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci --workspace apps/mobile --include-workspace-root
+
+      - name: Submit to the App Store
+        run: eas submit --platform ios --profile production --non-interactive
+        working-directory: apps/mobile
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Submit to Google Play
+        run: eas submit --platform android --profile production --non-interactive
+        working-directory: apps/mobile

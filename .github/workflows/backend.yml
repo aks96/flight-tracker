@@ -1,0 +1,114 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15-oss
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flight_tracker_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      # The suite is hermetic (no live database), but config validation and the
+      # db:setup smoke step below both read these.
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flight_tracker_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-jwt-secret-that-is-at-least-32-chars
+      JWT_REFRESH_SECRET: ci-refresh-secret-that-is-at-least-32-chars
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      # Install from the repo root — this is an npm workspaces monorepo, and
+      # installing inside apps/backend alone skips the hoisted root lockfile.
+      - name: Install dependencies
+        run: npm ci --workspace apps/backend --include-workspace-root
+
+      - name: Lint
+        run: npm run lint --workspace apps/backend
+
+      - name: Typecheck
+        run: npx tsc --noEmit --project apps/backend/tsconfig.json
+
+      - name: Test
+        run: npm test --workspace apps/backend
+
+      - name: Build
+        run: npm run build --workspace apps/backend
+
+      # Proves the schema actually applies against a real TimescaleDB, and that
+      # the built output is runnable (path aliases resolved, imports intact).
+      - name: Database schema smoke test
+        run: npm run db:setup --workspace apps/backend
+
+      - name: Docker image builds
+        run: docker build -t flight-tracker-backend:ci .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Gate production behind a GitHub environment so deploys can require
+    # approval and hold their own secrets.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        run: |
+          response=$(curl -sS -w '\n%{http_code}' -X POST \
+            "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}")
+          status=$(echo "$response" | tail -n1)
+          echo "$response" | sed '$d'
+          # The previous version ignored the response entirely, so a failed
+          # deploy still reported a green build.
+          if [ "$status" -ge 300 ]; then
+            echo "Deploy request failed with HTTP $status"
+            exit 1
+          fi

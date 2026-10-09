@@ -1,0 +1,30 @@
+{
+  "name": "flight-tracker",
+  "version": "1.0.0",
+  "description": "Flight price tracking and alert agent",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run backend",
+    "backend": "npm run dev --workspace apps/backend",
+    "worker": "npm run worker:dev --workspace apps/backend",
+    "mobile": "npm start --workspace apps/mobile",
+    "build": "npm run build --workspace apps/backend",
+    "test": "npm test --workspace apps/backend",
+    "lint": "npm run lint --workspace apps/backend",
+    "typecheck": "npx tsc --noEmit --project apps/backend/tsconfig.json && npx tsc --noEmit --project apps/mobile/tsconfig.json",
+    "db:setup": "npm run db:setup --workspace apps/backend",
+    "db:migrate": "npm run db:migrate --workspace apps/backend",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.19.4",
+    "npm": ">=10.0.0"
+  }
+}

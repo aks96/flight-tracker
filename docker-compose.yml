@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg15-oss
+    container_name: flight-tracker-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: flight_tracker
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: flight-tracker-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    # The builder stage keeps devDependencies (tsx) and the sources that
+    # `npm run dev` needs; the default runtime stage has neither.
+    build:
+      context: .
+      target: builder
+    container_name: flight-tracker-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/flight_tracker
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-key-change-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-key-change-in-production
+      DUFFEL_API_KEY: ${DUFFEL_API_KEY}
+      EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      CORS_ORIGIN: http://localhost:19000,http://localhost:8081
+      PORT: 3000
+      # One local process runs both the API and the scheduler.
+      RUN_SCHEDULER_IN_PROCESS: 'true'
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/backend:/app/apps/backend
+    command: npm run dev --workspace apps/backend
+
+volumes:
+  postgres_data:
+  redis_data:
